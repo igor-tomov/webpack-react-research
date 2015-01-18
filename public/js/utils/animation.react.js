@@ -73,6 +73,14 @@ if ( typeof document === 'object' && document.nodeType === 9 ){
             return;
         }
 
+        // invoke callback by type
+        callbackName = "onAnimation" + capitalize( type );
+
+        if ( typeof this[callbackName] === "function" ){
+            this[callbackName]( event );
+        }
+
+        // invoke callback by type and name
         callbackName = "on" + capitalize( name ) + capitalize( type );
 
         if ( typeof this[callbackName] === "function" ){
