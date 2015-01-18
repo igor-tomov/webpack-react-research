@@ -1,0 +1,52 @@
+.feed{
+  width: 50%;
+  min-width: 350px;
+  margin: 50px auto;
+
+  .feed-inner{
+    border: 1px solid #aaa;
+    border-radius: 5px;
+
+    h2{
+      font-size: 20px;
+      text-align: center;
+      margin: 10px;
+      text-decoration: underline;
+    }
+
+    .feed-content{
+      max-height: 300px;
+      margin-top: 10px;
+      padding: 5px;
+      overflow: hidden;
+      overflow-y: visible;
+      border-top: 1px solid #999;
+
+      .feed-item{
+        border-bottom: 1px solid #999;
+
+        &:first-child{
+          background-color: #fff8dc;
+        }
+
+        h4{
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        p{
+          margin-bottom: 5px;
+        }
+
+        .feed-date{
+          font-size: 10px;
+          color: #aaa;
+        }
+
+        .feed-desc{
+          font-size: 12px;
+        }
+      }
+    }
+  }
+}
