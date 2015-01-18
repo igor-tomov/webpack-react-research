@@ -1,5 +1,5 @@
 /**
-* React mixin provides animation feature with Animate.css
+* React mixin provides animation feature with Animate.css: http://daneden.github.io/animate.css/
 */
 
 if ( typeof document === 'object' && document.nodeType === 9 ){
@@ -49,7 +49,7 @@ if ( typeof document === 'object' && document.nodeType === 9 ){
             endClass = component.__animationEndClass__;
 
             if ( endClass ){
-                classes.push( endClass );
+                classes.indexOf( endClass ) === -1 && classes.push( endClass );
                 delete component.__animationEndClass__;
             }
 
@@ -86,6 +86,10 @@ if ( typeof document === 'object' && document.nodeType === 9 ){
 
     // AnimateCSS Mixin
     module.exports = {
+
+        /**
+         * Bind specific animation event handlers
+         */
         componentDidMount: function(){
             var node           = this.getDOMNode(),
                 animateEnter   = this.state.animateEnter,
@@ -100,6 +104,9 @@ if ( typeof document === 'object' && document.nodeType === 9 ){
             }
         },
 
+        /**
+         * Unbind specific animation event handlers
+         */
         componentWillUnmount: function(){
             var node           = this.getDOMNode(),
                 curOnAnimation = this._onAniation;
@@ -111,7 +118,25 @@ if ( typeof document === 'object' && document.nodeType === 9 ){
             delete this._onAniation;
         },
 
-        triggerAnimation: function( animateClass, animationEndClass ){
+        /**
+         * Trigger animation with supplied name.
+         * Syntax of hook classes:
+         *      {
+         *          start: "this class will be added before animation start",
+         *          end: "this class will be added after animation complete"
+         *      }
+         *
+         * @param {String} name - animation name which is defined in animate.css
+         * @param {Object} [hookClasses] - class names which is should be added to node before or after animationEnd,
+         *                                 in case of supplied string, it will be treated as end hook
+         */
+        triggerAnimation: function( name, hookClasses ){
+            hookClasses = hookClasses || {};
+
+            if ( typeof hookClasses === "string" ){
+                hookClasses = {end: hookClasses};
+            }
+
             var classes    = ( this.state.className || "" ).trim().split( /\s+/ ),
                 isAnimated = classes.indexOf( ANIMATE_CLASS );
 
@@ -119,15 +144,19 @@ if ( typeof document === 'object' && document.nodeType === 9 ){
                 classes.splice( isAnimated, 2 );
             }
 
-            if ( animationEndClass ){
-                this.__animationEndClass__ = animationEndClass;
+            if ( hookClasses.start && classes.indexOf( hookClasses.start ) === -1 ){
+                classes.push( hookClasses.start );
             }
 
-            classes.push( ANIMATE_CLASS, animateClass );
+            classes.push( ANIMATE_CLASS, name );
 
             this.setState({
                 className: classes.join( " " )
-            })
+            });
+
+            if ( hookClasses.end ){
+                this.__animationEndClass__ = hookClasses.end;
+            }
         }
     };
 }
