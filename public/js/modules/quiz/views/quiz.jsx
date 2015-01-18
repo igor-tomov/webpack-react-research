@@ -23,10 +23,12 @@ module.exports = React.createClass({
     },
 
     onDataReceived: function( data ){
-        this.setState({
-            status: data.status,
-            quizData: data.payload
-        });
+        if ( data && data.status ){
+            this.setState({
+                status: data.status,
+                quizData: data.payload
+            });
+        }
     },
 
     getCurrentContainer: function(){

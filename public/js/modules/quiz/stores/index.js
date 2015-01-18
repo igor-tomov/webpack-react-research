@@ -71,7 +71,7 @@ var quizStore = Reflux.createStore({
 
     init: function(){
         this.quizzes = new QuizList;
-        this.quizzes.on( "sync", this._onQuizReceived, this );
+        this.quizzes.on( "sync", this.onQuizReceived, this );
     },
 
     getQuizCount: function(){
@@ -83,22 +83,19 @@ var quizStore = Reflux.createStore({
     },
 
     dispatchQuizData: function(){
-        var model = this.quizzes.next(),
-            message = {
-                status: model ? QuizStatuses.PROGRESS : QuizStatuses.RESULT,
-                payload: {
-                    cases: model ? model.getCases() : [],
-                    count: this.getQuizCount(),
-                    passedCount: this.getPassedCount()
-                }
-            };
+        var model = this.quizzes.next();
 
-        console.log( "dispatchQuizData: ", message );
-
-        this.trigger( message );
+        this.trigger({
+            status: model ? QuizStatuses.PROGRESS : QuizStatuses.RESULT,
+            payload: {
+                cases: model ? model.getCases() : [],
+                count: this.getQuizCount(),
+                passedCount: this.getPassedCount()
+            }
+        });
     },
 
-    _onQuizReceived: function(){
+    onQuizReceived: function(){
         this.dispatchQuizData();
     },
 
@@ -108,16 +105,33 @@ var quizStore = Reflux.createStore({
     },
 
     onSelectQuizItem: function( selected ){
-        this.quizzes
-            .current()
-            .pass( selected );
+        selected = parseInt( selected, 10 );
 
+        var result = this.quizzes
+                         .current()
+                         .pass( selected );
+
+        this.trigger( result, selected );
+    },
+
+    onNextQuizItem: function(){
         this.dispatchQuizData();
     }
 });
 
 var quizItemState = Reflux.createStore({
+    init: function(){
+        this.listenTo( quizStore, this.onCaseStatus );
+    },
 
+    onCaseStatus: function( passed, selected ){
+        if ( typeof passed === 'boolean' ){
+            this.trigger({
+                passed: passed,
+                selected: selected
+            });
+        }
+    }
 });
 
 module.exports = {
