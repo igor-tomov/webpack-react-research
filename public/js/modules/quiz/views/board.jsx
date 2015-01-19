@@ -39,7 +39,7 @@ var QuizCase = React.createClass({
     },
 
     onAnimationEnd: function(){
-        Actions.nextQuizItem();
+        this.props.onRequestNextCase();
     },
 
     render: function(){
@@ -57,7 +57,7 @@ var QuizCase = React.createClass({
 });
 
 var QuizItem = React.createClass({
-    mixins: [Reflux.listenTo( quizItemState, "onSelectState" )],
+    mixins: [Reflux.listenTo( quizItemState, "onSelectResult" )],
 
     getInitialState: function(){
         return {
@@ -67,6 +67,12 @@ var QuizItem = React.createClass({
     },
 
     onSelectCase: function( event ){
+        event.preventDefault();
+
+        if ( this.state.passed !== null ){
+            return;
+        }
+
         var index = event.target.getAttribute( "data-index" );
 
         if ( index ){
@@ -74,29 +80,25 @@ var QuizItem = React.createClass({
         }
     },
 
-    onSelectState: function( data ){
-        console.log( "onSelectState: ", data );
+    onSelectResult: function( data ){
         this.setState( data );
     },
 
+    requestNextCase: function(){
+        this.setState( this.getInitialState() );
+        Actions.nextQuizItem();
+    },
+
     render: function(){
-        var selected  = this.state.selected,
-            clickable = selected < 0;
-
         var cases = this.props.cases.map(function( value, i ){
-            var passed = null;
-
-            if ( i === selected ){
-                passed = this.state.passed;
-            }
-
             return (
                 <QuizCase
                     key={i}
                     index={i}
                     value={value}
-                    passed={passed}
-                    onSelectCase={clickable ? this.onSelectCase : null}
+                    onSelectCase={this.onSelectCase}
+                    onRequestNextCase={this.requestNextCase}
+                    {...this.state}
                 />
             );
         }.bind(this));
