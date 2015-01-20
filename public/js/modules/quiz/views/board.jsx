@@ -7,7 +7,8 @@ var Reflux        = require( "reflux"),
 var SELECT_SUCCESS  = 'list-group-item-success',
     SELECT_FAIL     = 'list-group-item-danger',
     ANIMATE_SUCCESS = 'pulse',
-    ANIMATE_FAIL    = 'shake';
+    ANIMATE_FAIL    = 'shake',
+    TIMER_DURATION   = 10;
 
 
 var QuizCase = React.createClass({
@@ -111,6 +112,21 @@ var QuizItem = React.createClass({
                 {cases}
             </div>
         );
+    }
+});
+
+var QuizTimer = React.createClass({
+
+    getInitialState: function(){
+        return {
+            duration: TIMER_DURATION
+        }
+    },
+
+
+
+    componentDidMount: function(){
+
     }
 });
 
