@@ -18,7 +18,8 @@ module.exports = React.createClass({
                 cases: [],
                 count: 0,
                 passedCount: 0
-            }
+            },
+            timeout: 10
         };
     },
 
@@ -38,7 +39,7 @@ module.exports = React.createClass({
                 return <QuizWelcome />;
 
             case QuizStatuses.PROGRESS:
-                return <QuizBoard {...this.state.quizData} />;
+                return <QuizBoard {...this.state.quizData} timeout={this.state.timeout} />;
 
             case QuizStatuses.RESULT:
                 return <h2>This is the end</h2>;// todo: add result container

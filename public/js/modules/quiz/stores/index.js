@@ -116,6 +116,10 @@ var quizStore = Reflux.createStore({
 
     onNextQuizItem: function(){
         this.dispatchQuizData();
+    },
+
+    onTimeout: function(){
+        this.dispatchQuizData();
     }
 });
 

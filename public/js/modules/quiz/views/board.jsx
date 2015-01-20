@@ -7,8 +7,7 @@ var Reflux        = require( "reflux"),
 var SELECT_SUCCESS  = 'list-group-item-success',
     SELECT_FAIL     = 'list-group-item-danger',
     ANIMATE_SUCCESS = 'pulse',
-    ANIMATE_FAIL    = 'shake',
-    TIMER_DURATION   = 10;
+    ANIMATE_FAIL    = 'shake';
 
 
 var QuizCase = React.createClass({
@@ -105,8 +104,6 @@ var QuizItem = React.createClass({
                 );
             }.bind(this));
 
-        console.log( "QuizItem state: ", this.state );
-
         return (
             <div className="quiz-item">
                 {cases}
@@ -117,16 +114,80 @@ var QuizItem = React.createClass({
 
 var QuizTimer = React.createClass({
 
-    getInitialState: function(){
-        return {
-            duration: TIMER_DURATION
+    startTimer: function(){
+        this.stopTimer();
+
+        this.__timer__ = setInterval(function(){
+            var time = this.state.time - 1;
+
+            if ( time < 0 ){
+                this.stopTimer();
+                Actions.timeout();
+            }else{
+                this.setState({
+                    time: time
+                });
+            }
+        }.bind(this), 1000 );
+    },
+
+    stopTimer: function(){
+        if ( this.__timer__ ){
+            clearInterval( this.__timer__ );
         }
     },
 
-
+    componentWillMount: function(){
+        this.setState({
+            time: this.props.timeout
+        });
+    },
 
     componentDidMount: function(){
+        this.unsubscribe = quizItemState.listen( this.stopTimer );
+    },
 
+    componentWillReceiveProps: function(){
+        this.startTimer();
+
+        this.setState({
+            time: this.props.timeout
+        });
+
+    },
+
+    componentWillUnmount: function(){
+        this.stopTimer();
+        this.unsubscribe();
+    },
+
+    render: function(){
+        return (
+            <div className="quiz-bottom-col quiz-timer">
+                <span>{this.state.time}</span>
+            </div>
+        );
+    }
+});
+
+var QuizScores = React.createClass({
+
+    getDefultProps: function(){
+        return {
+            passedCount: 0,
+            count: 0
+        }
+    },
+
+    render: function(){
+        var props = this.props;
+
+        return (
+            <div className="quiz-bottom-col quiz-scores">
+                <span>{props.passedCount}</span>
+                <span>{props.count}</span>
+            </div>
+        );
     }
 });
 
@@ -141,11 +202,17 @@ module.exports = React.createClass({
     },
 
     render: function(){
+        var props = this.props;
+
         return (
             <div className={this.state.className}>
                 <div className="container">
                     <div className="row">
                         <QuizItem cases={this.props.cases} />
+                        <div className="quiz-bottom">
+                            <QuizTimer timeout={props.timeout} />
+                            <QuizScores count={props.count} passedCount={props.passedCount} />
+                        </div>
                     </div>
                 </div>
             </div>

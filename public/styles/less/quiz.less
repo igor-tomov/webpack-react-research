@@ -18,16 +18,24 @@
     .quiz-bottom{
       .make-xs-column( 12 );
 
-      .quiz-timer{
+      .quiz-bottom-col{
         .make-xs-column( 4 );
-        .make-xs-column-offset( 2 );
         .label;
         .label-info;
 
         padding: 10px;
+        font-size: 18px;
+      }
 
-        .quiz-timer-value{
-          font-size: 16px;
+      .quiz-timer{
+        .make-xs-column-offset( 1 );
+      }
+
+      .quiz-scores{
+        .make-xs-column-offset( 2 );
+        span:not(:last-child):after{
+          content: '/';
+          padding: 0 4px;
         }
       }
     }
