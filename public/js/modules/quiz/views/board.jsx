@@ -172,7 +172,7 @@ var QuizTimer = React.createClass({
 
 var QuizScores = React.createClass({
 
-    getDefultProps: function(){
+    getDefaultProps: function(){
         return {
             passedCount: 0,
             count: 0
