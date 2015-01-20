@@ -21,25 +21,25 @@ var QuizCase = React.createClass({
 
     componentWillReceiveProps: function( props ){
         var passed = props.passed,
-            selectClass, animateClass;
+            selectClass, animateName;
 
-        if ( passed === null ){
-            return;
-        }
+        if ( passed !== null ){
+            if ( passed ){
+                selectClass = SELECT_SUCCESS;
+                animateName = ANIMATE_SUCCESS;
+            }else{
+                selectClass = SELECT_FAIL;
+                animateName = ANIMATE_FAIL;
+            }
 
-        if ( passed === true ){
-            selectClass  = SELECT_SUCCESS;
-            animateClass = ANIMATE_SUCCESS;
+            this.triggerAnimation( animateName, {start: selectClass});
         }else{
-            selectClass  = SELECT_FAIL;
-            animateClass = ANIMATE_FAIL;
+            this.setState( this.getInitialState() );
         }
-
-        this.triggerAnimation( animateClass, {start: selectClass});
     },
 
     onAnimationEnd: function(){
-        this.props.onRequestNextCase();
+        Actions.nextQuizItem();
     },
 
     render: function(){
@@ -66,6 +66,14 @@ var QuizItem = React.createClass({
         }
     },
 
+    componentWillReceiveProps: function(){
+        this.setState( this.getInitialState() );
+    },
+
+    onSelectResult: function( data ){
+        this.setState( data );
+    },
+
     onSelectCase: function( event ){
         event.preventDefault();
 
@@ -80,28 +88,23 @@ var QuizItem = React.createClass({
         }
     },
 
-    onSelectResult: function( data ){
-        this.setState( data );
-    },
-
-    requestNextCase: function(){
-        this.setState( this.getInitialState() );
-        Actions.nextQuizItem();
-    },
-
     render: function(){
-        var cases = this.props.cases.map(function( value, i ){
-            return (
-                <QuizCase
-                    key={i}
-                    index={i}
-                    value={value}
-                    onSelectCase={this.onSelectCase}
-                    onRequestNextCase={this.requestNextCase}
-                    {...this.state}
-                />
-            );
-        }.bind(this));
+        var selected = this.state.selected,
+            passed   = this.state.passed,
+
+            cases = this.props.cases.map(function( value, i ){
+                return (
+                    <QuizCase
+                        key={i}
+                        index={i}
+                        value={value}
+                        passed={selected === i ? passed : null}
+                        onSelectCase={this.onSelectCase}
+                    />
+                );
+            }.bind(this));
+
+        console.log( "QuizItem state: ", this.state );
 
         return (
             <div className="quiz-item">
