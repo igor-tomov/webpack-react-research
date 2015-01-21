@@ -5,6 +5,7 @@ var React = require( "react" ),
 
     QuizWelcome = require( "./welcome.jsx" ),
     QuizBoard   = require( "./board.jsx" ),
+    QuizResult  = require( "./result.jsx" ),
 
     QuizStore = require( "../stores" ).quizStore;
 
@@ -42,7 +43,7 @@ module.exports = React.createClass({
                 return <QuizBoard {...this.state.quizData} timeout={this.state.timeout} />;
 
             case QuizStatuses.RESULT:
-                return <h2>This is the end</h2>;// todo: add result container
+                return <QuizResult {...this.state.quizData} />
         }
     },
 

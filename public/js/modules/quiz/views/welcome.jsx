@@ -28,7 +28,7 @@ module.exports = React.createClass({
                 <p className="desc">
                     Flux is the application architecture that Facebook uses for building client-side web applications. It complements React's composable view components by utilizing a unidirectional data flow.                </p>
                 <p>
-                    <button className="btn btn-primary btn-lg" onClick={this.onStart}>Get started</button>
+                    <button className="btn btn-primary btn-return btn-lg" onClick={this.onStart}>Get started</button>
                 </p>
             </div>
         );
