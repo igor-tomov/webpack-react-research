@@ -82,8 +82,8 @@ var quizStore = Reflux.createStore({
         return this.quizzes.passedCount();
     },
 
-    dispatchQuizData: function(){
-        var model = this.quizzes.next();
+    dispatchQuizData: function( isCurrent ){
+        var model = this.quizzes[ isCurrent ? 'current' : 'next' ]();
 
         this.trigger({
             status: model ? QuizStatuses.PROGRESS : QuizStatuses.RESULT,
@@ -96,7 +96,7 @@ var quizStore = Reflux.createStore({
     },
 
     onQuizReceived: function(){
-        this.dispatchQuizData();
+        this.dispatchQuizData( true );
     },
 
     // --------- action callbacks ---------
