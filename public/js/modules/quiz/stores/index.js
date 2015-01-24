@@ -1,76 +1,19 @@
-var Reflux       = require( "reflux" ),
-    Backbone     = require( "backbone" ),
-    Actions      = require( "../actions" ),
-    QuizStatuses = require( "../constants/quizStatuses" );
-
-var QUIZ_LIST_URL = '/quizzes';
-
-// ------------- Store models -------------
-var QuizItem = Backbone.Model.extend({
-
-    defaults: {
-        cases: [],
-        target: null
-    },
-
-    getCases: function(){
-        return this.get( "cases" );
-    },
-
-    /**
-     * Checks case with right answer
-     *
-     * @param {Number} caseIndex - index of case in current case array
-     * @returns {boolean}
-     */
-    pass: function( caseIndex ){
-        var result = this.get( "target" ) === +caseIndex;
-
-        if ( result ){
-            this.set( "passed", true );
-        }
-
-        return result;
-    }
-});
-
-var QuizList = Backbone.Collection.extend({
-    model: QuizItem,
-    url: QUIZ_LIST_URL,
-
-    // current index of item in game iteration
-    itemIndex: 0,
-
-    current: function(){
-        return this.at( this.itemIndex );
-    },
-
-    next: function(){
-        if ( this.itemIndex + 1 >= this.length ){
-            return null;
-        }
-
-        return this.at( ++this.itemIndex );
-    },
-
-    reset: function(){
-        this.itemIndex = 0;
-
-        Backbone.Collection.prototype.reset.apply( this, arguments );
-    },
-
-    passedCount: function(){
-        return this.where({ passed: true }).length;
-    }
-});
-
+var Reflux      = require( "reflux" ),
+    _           = require( "underscore" ),
+    Actions     = require( "../actions" ),
+    Statuses    = require( "../constants/quizStatuses" ),
+    Models      = require( "./models/quizData" ),
+    ResultGrade = require( "./models/quizResultGrade" ),
+    resultRules = require( "../config/resultRules" );
 
 // ------------- Store classes -------------
 var quizStore = Reflux.createStore({
     listenables: Actions,
 
     init: function(){
-        this.quizzes = new QuizList;
+        this.quizzes     = new Models.QuizList;
+        this.resultGrade = new ResultGrade( resultRules );
+
         this.quizzes.on( "sync", this.onQuizReceived, this );
     },
 
@@ -82,21 +25,60 @@ var quizStore = Reflux.createStore({
         return this.quizzes.passedCount();
     },
 
-    dispatchQuizData: function( isCurrent ){
-        var model = this.quizzes[ isCurrent ? 'current' : 'next' ]();
-
+    dispatch: function( status, payload ){
         this.trigger({
-            status: model ? QuizStatuses.PROGRESS : QuizStatuses.RESULT,
-            payload: {
-                cases: model ? model.getCases() : [],
-                count: this.getQuizCount(),
-                passedCount: this.getPassedCount()
-            }
+            status: status,
+            payload: payload
         });
     },
 
+    dispatchCurrentData: function(){
+        var curModel = this.quizzes.current();
+
+        if ( curModel ){
+            this.dispatch( Statuses.PROGRESS, {
+                cases: curModel.getCases(),
+                count: this.getQuizCount(),
+                passedCount: this.getPassedCount()
+            });
+        }
+    },
+
+    dispatchNextData: function(){
+        var nextModel = this.quizzes.next();
+
+        if ( nextModel ){
+            this.dispatch( Statuses.PROGRESS, {
+                cases: nextModel.getCases(),
+                count: this.getQuizCount(),
+                passedCount: this.getPassedCount()
+            });
+        }else{
+            this.dispatchQuizResult();
+        }
+    },
+
+    dispatchQuizResult: function(){
+        var count       = this.getQuizCount(),
+            passedCount = this.getPassedCount();
+
+        var curGrade = this.resultGrade.compute( passedCount, count );
+
+        this.dispatch( Statuses.RESULT, _.extend({
+            count: count,
+            passedCount: passedCount
+        }, curGrade.payload ));
+    },
+
+    dispatchReset: function(){
+        this.quizzes.reset();
+        this.dispatch( Statuses.BOOTSTRAP );
+    },
+
+    // --------- model callbacks ---------
+
     onQuizReceived: function(){
-        this.dispatchQuizData( true );
+        this.dispatchCurrentData();
     },
 
     // --------- action callbacks ---------
@@ -115,11 +97,15 @@ var quizStore = Reflux.createStore({
     },
 
     onNextQuizItem: function(){
-        this.dispatchQuizData();
+        this.dispatchNextData();
     },
 
     onTimeout: function(){
-        this.dispatchQuizData();
+        this.dispatchNextData();
+    },
+
+    onResetQuiz: function(){
+        this.dispatchReset();
     }
 });
 

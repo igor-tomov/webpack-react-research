@@ -10,7 +10,7 @@ module.exports = {
     },
 
     entry: {
-        vendors: [ "backbone", "backbone.nativeajax", "react", "reflux", './public/js/app' ],
+        vendors: [ "underscore", "backbone", "backbone.nativeajax", "react", "reflux", './public/js/app' ],
         modules: [
             'modules/quiz',
             'modules/clocks',
