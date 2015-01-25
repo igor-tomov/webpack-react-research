@@ -7,7 +7,7 @@ var React = require( "react" ),
     QuizBoard   = require( "./board.jsx" ),
     QuizResult  = require( "./result.jsx" ),
 
-    QuizStore = require( "../stores" ).quizStore;
+    QuizStore = require( "../stores" );
 
 module.exports = React.createClass({
     mixins: [Reflux.listenTo( QuizStore, "onDataReceived" )],
@@ -17,16 +17,18 @@ module.exports = React.createClass({
             status: QuizStatuses.BOOTSTRAP,
             quizData: {
                 cases: [],
+                selectedCase: null,
+                result: null,
                 count: 0,
-                passedCount: 0
-            },
-            timeout: 10
+                passedCount: 0,
+                timeout: 0
+            }
         };
     },
 
     onDataReceived: function( data ){
         if ( data && data.status ){
-            this.setState({
+            this.replaceState({
                 status: data.status,
                 quizData: data.payload
             });
@@ -40,7 +42,7 @@ module.exports = React.createClass({
                 return <QuizWelcome />;
 
             case QuizStatuses.PROGRESS:
-                return <QuizBoard {...this.state.quizData} timeout={this.state.timeout} />;
+                return <QuizBoard {...this.state.quizData} />;
 
             case QuizStatuses.RESULT:
                 return <QuizResult {...this.state.quizData} />

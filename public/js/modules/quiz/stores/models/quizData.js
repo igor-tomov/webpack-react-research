@@ -1,4 +1,4 @@
-var paths    = require( "../../config/modelPaths" ),
+var config   = require( "../../config" ),
     Backbone = require( "backbone" );
 
 var QuizItem = Backbone.Model.extend({
@@ -31,7 +31,7 @@ var QuizItem = Backbone.Model.extend({
 
 var QuizList = Backbone.Collection.extend({
     model: QuizItem,
-    url: paths.quizList,
+    url: config.quizListURI,
 
     // current index of item in game iteration
     itemIndex: 0,

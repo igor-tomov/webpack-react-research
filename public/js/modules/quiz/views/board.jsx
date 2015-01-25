@@ -1,7 +1,6 @@
 var Reflux        = require( "reflux"),
     React         = require( "react" ),
     Actions       = require( "../actions" ),
-    quizItemState = require( "../stores" ).quizItemState,
     CSSAnimate    = require( "utils/animation.react" );
 
 var SELECT_SUCCESS  = 'list-group-item-success',
@@ -57,27 +56,11 @@ var QuizCase = React.createClass({
 });
 
 var QuizItem = React.createClass({
-    mixins: [Reflux.listenTo( quizItemState, "onSelectResult" )],
-
-    getInitialState: function(){
-        return {
-            passed: null,
-            selected: -1
-        }
-    },
-
-    componentWillReceiveProps: function(){
-        this.setState( this.getInitialState() );
-    },
-
-    onSelectResult: function( data ){
-        this.setState( data );
-    },
 
     onSelectCase: function( event ){
         event.preventDefault();
 
-        if ( this.state.passed !== null ){
+        if ( this.props.selected ){
             return;
         }
 
@@ -88,17 +71,24 @@ var QuizItem = React.createClass({
         }
     },
 
-    render: function(){
-        var selected = this.state.selected,
-            passed   = this.state.passed,
+    componentWillReceiveProps: function( nextProps ){
+        if ( nextProps.selected ){
+            this.setState({
+                cases: this.props.cases
+            });
+        }
+    },
 
-            cases = this.props.cases.map(function( value, i ){
+    render: function(){
+        var selected = this.props.selected || {},
+
+            cases = ( this.props.cases || this.state.cases ).map(function( value, i ){
                 return (
                     <QuizCase
                         key={i}
                         index={i}
                         value={value}
-                        passed={selected === i ? passed : null}
+                        passed={selected.index === i ? selected.passed : null}
                         onSelectCase={this.onSelectCase}
                     />
                 );
@@ -144,21 +134,23 @@ var QuizTimer = React.createClass({
     },
 
     componentDidMount: function(){
-        this.unsubscribe = quizItemState.listen( this.stopTimer );
+        this.startTimer();
     },
 
-    componentWillReceiveProps: function(){
-        this.startTimer();
+    componentWillReceiveProps: function( props ){
+        if ( props.selected ){
+            this.stopTimer();
+        }else{
+            this.startTimer();
 
-        this.setState({
-            time: this.props.timeout
-        });
-
+            this.setState({
+                time: props.timeout
+            });
+        }
     },
 
     componentWillUnmount: function(){
         this.stopTimer();
-        this.unsubscribe();
     },
 
     render: function(){
@@ -208,9 +200,9 @@ module.exports = React.createClass({
             <div className={this.state.className}>
                 <div className="container">
                     <div className="row">
-                        <QuizItem cases={this.props.cases} />
+                        <QuizItem cases={props.cases} selected={props.selectedCase} />
                         <div className="quiz-bottom">
-                            <QuizTimer timeout={props.timeout} />
+                            <QuizTimer timeout={props.timeout} selected={!!props.selectedCase} />
                             <QuizScores count={props.count} passedCount={props.passedCount} />
                         </div>
                     </div>

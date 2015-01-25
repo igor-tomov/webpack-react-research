@@ -16,7 +16,7 @@ module.exports = React.createClass({
 
     componentWillMount: function(  ){
         this.setState({
-           className: this.state.className + " " + this.props.alertClass
+           className: this.state.className + " " + this.props.result.alertClass
         });
     },
 
@@ -29,7 +29,8 @@ module.exports = React.createClass({
     },
 
     render: function(){
-        var props = this.props;
+        var props  = this.props,
+            result = props.result;
 
         return (
             <div className={this.state.className}>
@@ -37,9 +38,9 @@ module.exports = React.createClass({
                     <span>{props.passedCount}</span>
                     <span>{props.count}</span>
                 </h1>
-                <p className="quiz-result-message">{props.message}</p>
+                <p className="quiz-result-message">{result.message}</p>
                 <p className="quiz-result-bottom">
-                    <button className="btn btn-primary" onClick={this._onClick}>Go Back</button>
+                    <button className="btn btn-primary btn-lg" onClick={this._onClick}>Go Back</button>
                 </p>
             </div>
         );

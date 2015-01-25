@@ -1,13 +1,14 @@
-var Reflux      = require( "reflux" ),
-    _           = require( "underscore" ),
+var _           = require( "underscore" ),
+    Reflux      = require( "reflux" ),
     Actions     = require( "../actions" ),
     Statuses    = require( "../constants/quizStatuses" ),
     Models      = require( "./models/quizData" ),
     ResultGrade = require( "./models/quizResultGrade" ),
+    config      = require( "../config" ),
     resultRules = require( "../config/resultRules" );
 
 // ------------- Store classes -------------
-var quizStore = Reflux.createStore({
+module.exports = Reflux.createStore({
     listenables: Actions,
 
     init: function(){
@@ -26,9 +27,15 @@ var quizStore = Reflux.createStore({
     },
 
     dispatch: function( status, payload ){
+        var defaultPayload = {
+            count: this.getQuizCount(),
+            passedCount: this.getPassedCount(),
+            timeout: config.timeout
+        };
+
         this.trigger({
             status: status,
-            payload: payload
+            payload: _.extend( defaultPayload, payload )
         });
     },
 
@@ -37,9 +44,7 @@ var quizStore = Reflux.createStore({
 
         if ( curModel ){
             this.dispatch( Statuses.PROGRESS, {
-                cases: curModel.getCases(),
-                count: this.getQuizCount(),
-                passedCount: this.getPassedCount()
+                cases: curModel.getCases()
             });
         }
     },
@@ -49,25 +54,28 @@ var quizStore = Reflux.createStore({
 
         if ( nextModel ){
             this.dispatch( Statuses.PROGRESS, {
-                cases: nextModel.getCases(),
-                count: this.getQuizCount(),
-                passedCount: this.getPassedCount()
+                cases: nextModel.getCases()
             });
         }else{
             this.dispatchQuizResult();
         }
     },
 
+    dispatchCaseResult: function( index, passed ){
+        this.dispatch( Statuses.PROGRESS, {
+            selectedCase: {
+                index: index,
+                passed: passed
+            }
+        });
+    },
+
     dispatchQuizResult: function(){
-        var count       = this.getQuizCount(),
-            passedCount = this.getPassedCount();
+        var curGrade = this.resultGrade.compute( this.getPassedCount(), this.getQuizCount() );
 
-        var curGrade = this.resultGrade.compute( passedCount, count );
-
-        this.dispatch( Statuses.RESULT, _.extend({
-            count: count,
-            passedCount: passedCount
-        }, curGrade.payload ));
+        this.dispatch( Statuses.RESULT, {
+            result: curGrade
+        });
     },
 
     dispatchReset: function(){
@@ -89,11 +97,11 @@ var quizStore = Reflux.createStore({
     onSelectQuizItem: function( selected ){
         selected = parseInt( selected, 10 );
 
-        var result = this.quizzes
+        var passed = this.quizzes
                          .current()
                          .pass( selected );
 
-        this.trigger( result, selected );
+        this.dispatchCaseResult( selected, passed );
     },
 
     onNextQuizItem: function(){
@@ -108,23 +116,3 @@ var quizStore = Reflux.createStore({
         this.dispatchReset();
     }
 });
-
-var quizItemState = Reflux.createStore({
-    init: function(){
-        this.listenTo( quizStore, this.onCaseStatus );
-    },
-
-    onCaseStatus: function( passed, selected ){
-        if ( typeof passed === 'boolean' ){
-            this.trigger({
-                passed: passed,
-                selected: selected
-            });
-        }
-    }
-});
-
-module.exports = {
-    quizStore: quizStore,
-    quizItemState: quizItemState
-};

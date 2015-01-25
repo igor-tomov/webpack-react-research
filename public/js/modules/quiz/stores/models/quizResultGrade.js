@@ -28,7 +28,7 @@ QuizResultGrade.prototype = {
             point === range;
 
             if ( assert ){
-                return rules[i];
+                return rules[i].payload;
             }
         }
 
