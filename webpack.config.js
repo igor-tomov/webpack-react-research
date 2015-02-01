@@ -1,5 +1,7 @@
 var webpack = require("webpack");
 
+var ENV = process.env.NODE_ENV || 'development';
+
 module.exports = {
     resolve: {
         alias: {
@@ -10,12 +12,16 @@ module.exports = {
     },
 
     entry: {
-        vendors: [ "underscore", "backbone", "backbone.nativeajax", "react", "reflux", './public/js/app' ],
-        modules: [
-            'modules/quiz',
-            'modules/clocks',
-            'modules/feed'
-        ]
+        common: [
+            // vendors
+            "underscore",
+            "backbone",
+            "backbone.nativeajax",
+            "react",
+            "reflux"
+        ],
+
+        modules: './public/js/app'
     },
 
     output: {
@@ -37,6 +43,9 @@ module.exports = {
     },
 
     plugins: [
-        new webpack.optimize.CommonsChunkPlugin( "vendors", "vendors.bundle.js" )
+        new webpack.optimize.CommonsChunkPlugin( "common", "common.bundle.js" ),
+        new webpack.DefinePlugin({
+            ENV: JSON.stringify( ENV )
+        })
     ]
 };
