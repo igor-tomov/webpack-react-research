@@ -8,3 +8,5 @@ console.log( "Environment ", ENV );
 modules.keys().forEach(function( filename ){
     modules( filename );
 });
+
+global.modules = modules;

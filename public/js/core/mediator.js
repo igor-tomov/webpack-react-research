@@ -1,47 +1,80 @@
-var EventEmitter = reqiure( "eventemitter" ).EventEmitter,
+var _            = require( "underscore" ),
+    EventEmitter = require( "eventemitter" ).EventEmitter,
     Logger       = require( "logger" );
 
-// defaults options for event emitter
-var mediator = new EventEmitter({
-    wildcard: true,
-    delimiter: '::',
-    newListener: false,
-    maxListeners: 20
-});
+// shared instance of EventEmitter for all sandboxes
+var mediator = new EventEmitter();
 
+function attachListener( method ){
+    return function( event, listener, context ){
+        if ( ! listener.__sandboxId__ ){
+            listener.__sandboxId__ = this.sandboxId;
+        }
+
+        mediator[method]( event, listener, context );
+    }
+}
+
+/**
+ * Provide facade API to app environment from module
+ *
+ * @param moduleName
+ * @constructor
+ */
 function Sandbox( moduleName ){
+
+    // generate uuid for current instance
+    this.sandboxId = _.uniqueId( "sandbox-" + moduleName + "-" );
+
+    // instantiate logger
     this.logger = new Logger( moduleName );
+
+    if ( LOGGING ){
+        this.logger.enable();
+    }
 }
 
 Sandbox.prototype = {
-    on: function( event, listener, contenxt ){
-        var callback;
+    constructor: Sandbox,
 
-        if ( listener && listener.__callback__ ){
-            this.logger.warn( "Listener has already bound, ", listener );
+    on: attachListener( "on" ),
+    once: attachListener( "once" ),
+    trigger: mediator.emit,
+
+    off: function( event, listener ){
+        if ( listener.__sandboxId__ ){
+            delete listener.__sandboxId__;
+        }
+
+        mediator.off( event, listener );
+    },
+
+    removeSandboxListeners: function(){
+        if ( ! mediator._events ){
             return;
         }
 
-        if ( contenxt ){
-            callback = listener.bind( contenxt );
-            listener.__callback__ = callback;
-        }else{
-            callback = listener;
+        var allEvents = mediator._events,
+            sandboxId = this.sandboxId,
+            event, listeners, newListeners, i, len;
+
+        for ( event in allEvents ){
+            if ( allEvents.hasOwnProperty( event ) ){
+                listeners    = Array.isArray( allEvents[event] ) ? allEvents[event] : [allEvents[event]];
+                newListeners = [];
+
+                for ( i = 0, len = listeners.length; i < len; i++ ){
+                    if ( listeners[i].fn.__sandboxId__ !== sandboxId ){
+                        newListeners.push( listeners[i] );
+                    }
+                }
+
+                allEvents[event] = newListeners.length === 1 ? newListeners[0] : newListeners;
+            }
         }
-
-        mediator.on( event, callback );
-    },
-
-    once: function( event, listener, contenxt ){
-        if ( contenxt ){
-            listener = listener.bind( contenxt );
-        }
-
-        mediator.on( event, listener );
-    },
-
-    off: function( event, listener ){
-        mediator.off( event, listener.__callback__ || listener );
-        delete listener.__callback__;
     }
+};
+
+module.exports = {
+    Sandbox: Sandbox
 };

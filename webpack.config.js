@@ -45,6 +45,7 @@ module.exports = {
     plugins: [
         new webpack.optimize.CommonsChunkPlugin( "common", "common.bundle.js" ),
         new webpack.DefinePlugin({
+            LOGGING: true,
             ENV: JSON.stringify( ENV )
         })
     ]
