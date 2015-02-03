@@ -3,6 +3,14 @@ require( "styles/feed.less" );
 var React = require( "react" ),
     View  = require( "./views/feed.jsx" );
 
-var element = document.getElementById( "feed" );
+module.exports = {
+    init: function(){
+        this.sandbox.on( "quiz::close:feed", this.onClose.bind(this) );
+        React.render( React.createElement( View, null ), this.el );
+    },
 
-React.render( React.createElement( View, null ), element );
+    onClose: function(){
+        React.unmountComponentAtNode( this.el );
+        this.destroy();
+    }
+};

@@ -2,27 +2,43 @@ var _       = require( "underscore" ),
     Sandbox = require( "./mediator" ).Sandbox,
     Logger  = require( "./logger" );
 
-// Stolen from Backbone 0.9.9 !
+// Stolen from Backbone 1.1.2 !
 // Helper function to correctly set up the prototype chain, for subclasses.
 // Similar to `goog.inherits`, but uses a hash of prototype properties and
 // class properties to be extended.
-function extend(protoProps, staticProps) {
+function extend ( protoProps, staticProps ){
     var parent = this;
     var module;
-    if (protoProps && ownProp(protoProps, 'constructor')) {
+
+    // The constructor function for the new subclass is either defined by you
+    // (the "constructor" property in your `extend` definition), or defaulted
+    // by us to simply call the parent's constructor.
+    if (protoProps && _.has(protoProps, 'constructor')) {
         module = protoProps.constructor;
     } else {
-        module = function(){ parent.apply(this, arguments); };
+        module = function(){ return parent.apply(this, arguments); };
     }
-    core.util.extend(module, parent, staticProps);
-    var Module = function(){ this.constructor = module; };
-    Module.prototype = parent.prototype;
-    module.prototype = new Module();
-    if (protoProps) { core.util.extend(module.prototype, protoProps); }
-    module.__super__ = parent.prototype;
-    return module;
-}
 
+    // Add static properties to the constructor function, if supplied.
+    _.extend(module, parent, staticProps);
+
+    // Set the prototype chain to inherit from `parent`, without calling
+    // `parent`'s constructor function.
+    var Module = function(){ this.constructor = module; };
+
+    Module.prototype = parent.prototype;
+    module.prototype = new Module;
+
+    // Add prototype properties (instance properties) to the subclass,
+    // if supplied.
+    if (protoProps) _.extend(module.prototype, protoProps);
+
+    // Set a convenience property in case the parent's prototype is needed
+    // later.
+    module.__super__ = parent.prototype;
+
+    return module;
+};
 /**
  * Base module of application
  *
@@ -70,8 +86,7 @@ Module.prototype = {
     type: "base",
 
     options: {
-        selector: null,
-        multipleInstances: false
+        selector: null
     },
 
     render: function(){
@@ -86,6 +101,8 @@ Module.prototype = {
 
     extend: extend
 };
+
+Module.extend = extend;
 
 /**
  * Manages modules lifecycle within current app environment
@@ -113,10 +130,15 @@ ModuleManager.prototype = {
     /**
      * Initialize all models that is provided by current require context
      */
-    initModels: function(){
+    initModules: function(){
+
+        if ( ENV === "development" ){
+            this.logger.groupStart();
+        }
+
         this._require.keys().forEach(function( path ){
             var prototype = this._require( path ),
-                constructor, sandbox, name;
+                ModuleConstructor, sandbox, name;
 
             // retrieve module name from path
             name = path.match( this.MODULE_NAME_PATTERN );
@@ -124,10 +146,10 @@ ModuleManager.prototype = {
             if ( name ){
                 name = name[1];
             }else{
-                throw new Error( "ModuleManager.initModels: module name isn't retrieved from path: ", path );
+                throw new Error( "ModuleManager.initModules: module name isn't retrieved from path: ", path );
             }
 
-            if ( ! this._loadedModules[name] ){
+            if ( this._loadedModules[name] ){
                 this.logger.error( "module '" + name + "' is already initialized." );
                 return;
             }
@@ -136,15 +158,19 @@ ModuleManager.prototype = {
             sandbox = new Sandbox( name );
 
             // get module constructor
-            constructor = this.factoryModuleConstructor( prototype.type || "base", prototype );
+            ModuleConstructor = this.factoryModuleConstructor( prototype.type || "base", prototype );
 
             // instantiate module and cache to list
             this._loadedModules[name] = {
                 sandbox: sandbox,
-                instance: new constructor( name, sandbox )
+                instance: new ModuleConstructor( name, sandbox )
             };
 
         }.bind(this));
+
+        if ( ENV === "development" ){
+            this.logger.groupEnd();
+        }
     },
 
     /**
@@ -210,6 +236,16 @@ ModuleManager.prototype = {
     }
 };
 
+/**
+ * Module constructors list
+ * @type {{base: Module}}
+ * @private
+ */
 ModuleManager._moduleTypes = {
     base: Module
+};
+
+module.exports = {
+    Module: Module,
+    ModuleManager: ModuleManager
 };

@@ -1,8 +1,16 @@
 require( "styles/quiz.less" );
 
 var React = require( "react" ),
-    View  = require( "./views/quiz.jsx" );
+    View  = require( "./views/quiz.jsx" ),
+    Actions = require("./actions");
 
-var element = document.getElementById( "quiz" );
+module.exports = {
+    init: function(){
+        Actions.startQuiz.listen( this.closeFeeds.bind(this) );
+        React.render( React.createElement( View, null ), this.el );
+    },
 
-React.render( React.createElement( View, null ), element );
+    closeFeeds: function(){
+        this.sandbox.trigger( "quiz::close:feed" );
+    }
+};

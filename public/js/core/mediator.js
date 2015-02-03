@@ -1,6 +1,6 @@
 var _            = require( "underscore" ),
-    EventEmitter = require( "eventemitter" ).EventEmitter,
-    Logger       = require( "logger" );
+    EventEmitter = require( "eventemitter3" ).EventEmitter,
+    Logger       = require( "./logger" );
 
 // shared instance of EventEmitter for all sandboxes
 var mediator = new EventEmitter();
@@ -39,7 +39,14 @@ Sandbox.prototype = {
 
     on: attachListener( "on" ),
     once: attachListener( "once" ),
-    trigger: mediator.emit,
+
+    trigger: function( event ){
+        mediator.emit.apply( mediator, arguments );
+
+        if ( ENV === "development" ){
+            this.logger.log( '"' + event + '" event has been triggered with arguments: ', Array.prototype.slice.call( arguments, 1 ) );
+        }
+    },
 
     off: function( event, listener ){
         if ( listener.__sandboxId__ ){

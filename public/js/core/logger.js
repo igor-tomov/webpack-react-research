@@ -25,39 +25,55 @@ function Logger(name) {
     return this;
 }
 
-Logger.prototype.isEnabled = function () {
-    return this._enabled;
-};
+Logger.prototype = {
+    constructor: Logger,
 
-Logger.prototype.setName = function(name){
-    this.name = name;
-};
+    isEnabled: function(){
+        return this._enabled;
+    },
 
-Logger.prototype.enable = function() {
-    this._log     = (console.log   || noop);
-    this._warn    = (console.warn  || this._log);
-    this._error   = (console.error || this._log);
-    this._enabled = true;
+    setName: function(name){
+        this.name = name;
+    },
 
-    return this;
-};
+    enable: function() {
+        this._log     = (console.log   || noop);
+        this._warn    = (console.warn  || this._log);
+        this._error   = (console.error || this._log);
+        this._enabled = true;
 
-Logger.prototype.write = function(output, args){
-    var parameters = Array.prototype.slice.call(args);
-    parameters.unshift(this.name + ": ");
-    output.apply(console, parameters);
-};
+        return this;
+    },
 
-Logger.prototype.log = function() {
-    this.write(this._log, arguments);
-};
+    write: function(output, args){
+        var parameters = Array.prototype.slice.call(args);
+        parameters.unshift(this.name + ": ");
+        output.apply(console, parameters);
+    },
 
-Logger.prototype.warn = function() {
-    this.write(this._warn, arguments);
-};
+    log: function() {
+        this.write(this._log, arguments);
+    },
 
-Logger.prototype.error = function() {
-    this.write(this._error, arguments);
+    warn: function() {
+        this.write(this._warn, arguments);
+    },
+
+    error: function() {
+        this.write(this._error, arguments);
+    },
+
+    groupStart: function(){
+        if ( typeof console === "object" && console.group ){
+            console.group();
+        }
+    },
+
+    groupEnd: function(){
+        if ( typeof console === "object" && console.groupEnd ){
+            console.groupEnd();
+        }
+    }
 };
 
 module.exports = Logger;
